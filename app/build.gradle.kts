@@ -70,6 +70,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.47")
     kapt("com.google.dagger:hilt-android-compiler:2.47")
 
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
     testImplementation("junit:junit:4.13.2")

@@ -1,0 +1,11 @@
+package com.serial.nats.communication.core.device
+
+import com.hoho.android.usbserial.driver.UsbSerialDriver
+import com.hoho.android.usbserial.driver.UsbSerialPort
+
+data class NativeDevice(
+    val id: String,
+    val name: String,
+    val port: UsbSerialPort,
+    val driver: UsbSerialDriver
+)

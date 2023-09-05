@@ -22,10 +22,11 @@ interface AppModule {
     companion object {
         @Provides
         @Singleton
-        fun provideDeviceManager(@ApplicationContext context: Context): NativeDeviceManager {
+        fun provideDeviceManager(
+            @ApplicationContext context: Context
+        ): NativeDeviceManager {
             return NativeDeviceManager(
-                context = context,
-                dispatcher = Dispatchers.Default
+                context = context, dispatcher = Dispatchers.Default
             )
         }
     }

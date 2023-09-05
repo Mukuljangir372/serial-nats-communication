@@ -1,4 +1,4 @@
-package com.serial.nats.communication
+package com.serial.nats.communication.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,10 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.serial.nats.communication.core.theme.SerialNatsCommunicationTheme
-import com.serial.nats.communication.presentation.DeviceConnectionScreen
-import dagger.hilt.android.HiltAndroidApp
+import com.serial.nats.communication.presentation.device.DeviceConnectionScreen
 
-@HiltAndroidApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
