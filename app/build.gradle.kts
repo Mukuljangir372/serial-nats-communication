@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.serial.nats.communication"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.serial.nats.communication"
