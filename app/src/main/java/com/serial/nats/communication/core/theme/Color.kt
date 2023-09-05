@@ -1,4 +1,4 @@
-package com.serial.nats.communication.ui.theme
+package com.serial.nats.communication.core.theme
 
 import androidx.compose.ui.graphics.Color
 

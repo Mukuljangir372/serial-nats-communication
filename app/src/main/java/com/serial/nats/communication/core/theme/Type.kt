@@ -1,4 +1,4 @@
-package com.serial.nats.communication.ui.theme
+package com.serial.nats.communication.core.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
