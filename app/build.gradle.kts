@@ -81,6 +81,8 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation("com.github.mik3y:usb-serial-for-android:3.5.1")
 }
 
 kapt {
