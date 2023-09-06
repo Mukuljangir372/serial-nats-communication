@@ -113,6 +113,8 @@ class DeviceManagerImpl(
             requireDevicePermission(usbManager, device.device)
             val usbConnection = usbManager.openDevice(device.device)
             device.port.open(usbConnection)
+//            val ioManager = SerialInputOutputManager(device.port)
+//            ioManager.start()
             return device.copy(connected = true)
         }
 
