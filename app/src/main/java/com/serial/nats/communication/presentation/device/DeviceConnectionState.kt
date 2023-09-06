@@ -5,24 +5,44 @@ import com.serial.nats.communication.presentation.device.model.DisplayNativeDevi
 
 data class DeviceConnectionState(
     val loading: Boolean,
-    val devices: List<NativeDevice>
+    val errorMessage: String,
+    val devices: List<NativeDevice>,
+    val connectionDevice: NativeDevice?,
+    val deviceConnected: Boolean,
+    val deviceRequirePermission: Boolean,
+    val devicePermissionGranted: Boolean
 ) {
     companion object {
         val idle = DeviceConnectionState(
             loading = false,
-            devices = emptyList()
+            errorMessage = "",
+            devices = emptyList(),
+            connectionDevice = null,
+            deviceConnected = false,
+            deviceRequirePermission = false,
+            devicePermissionGranted = false
         )
     }
 }
 
 data class DeviceConnectionUiState(
     val loading: Boolean,
-    val devices: List<DisplayNativeDevice>
+    val errorMessage: String,
+    val devices: List<DisplayNativeDevice>,
+    val connectionDevice: DisplayNativeDevice?,
+    val deviceConnected: Boolean,
+    val deviceRequirePermission: Boolean,
+    val devicePermissionGranted: Boolean
 ) {
     companion object {
         val idle = DeviceConnectionUiState(
             loading = false,
-            devices = emptyList()
+            errorMessage = "",
+            devices = emptyList(),
+            connectionDevice = null,
+            deviceConnected = false,
+            deviceRequirePermission = false,
+            devicePermissionGranted = false
         )
     }
 }

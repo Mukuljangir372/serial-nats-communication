@@ -54,15 +54,26 @@ class DeviceConnectionViewModel @Inject constructor(
         private fun convertStateToUiState(
             state: DeviceConnectionState
         ): DeviceConnectionUiState {
-            return DeviceConnectionUiState(loading = state.loading,
-                devices = state.devices.map { convertDeviceToDisplayDevice(it) })
+            val connectionDevice = if (state.connectionDevice != null) {
+                convertDeviceToDisplayDevice(state.connectionDevice)
+            } else null
+            return DeviceConnectionUiState(
+                loading = state.loading,
+                devices = state.devices.map { convertDeviceToDisplayDevice(it) },
+                errorMessage = state.errorMessage,
+                connectionDevice = connectionDevice,
+                deviceConnected = state.deviceConnected,
+                deviceRequirePermission = state.deviceRequirePermission,
+                devicePermissionGranted = state.devicePermissionGranted
+            )
         }
 
         private fun convertDeviceToDisplayDevice(
             device: NativeDevice
         ): DisplayNativeDevice {
             return DisplayNativeDevice(
-                id = device.id, name = device.name
+                id = device.id,
+                name = device.name
             )
         }
 

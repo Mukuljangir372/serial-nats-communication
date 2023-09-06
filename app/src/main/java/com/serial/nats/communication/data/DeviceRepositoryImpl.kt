@@ -15,4 +15,20 @@ class DeviceRepositoryImpl(
             deviceManager.getDevices()
         }
     }
+
+    override suspend fun openConnection(
+        deviceId: String
+    ): NativeDevice {
+        return withContext(dispatcher) {
+            deviceManager.openConnection(deviceId)
+        }
+    }
+
+    override suspend fun closeConnection(
+        deviceId: String
+    ): NativeDevice {
+        return withContext(dispatcher) {
+            deviceManager.closeConnection(deviceId)
+        }
+    }
 }

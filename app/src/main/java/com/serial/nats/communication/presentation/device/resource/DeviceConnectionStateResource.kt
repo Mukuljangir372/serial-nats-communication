@@ -19,6 +19,11 @@ object DeviceConnectionStateResource {
                 id = "router-rc-3",
                 name = "Router-RC-3"
             )
-        )
+        ),
+        errorMessage = "",
+        connectionDevice = null,
+        deviceConnected = false,
+        devicePermissionGranted = false,
+        deviceRequirePermission = false
     )
 }
