@@ -1,6 +1,6 @@
 package com.serial.nats.communication.presentation.device
 
-import com.serial.nats.communication.core.device.NativeDevice
+import com.serial.nats.communication.core.device.manager.NativeDevice
 import com.serial.nats.communication.presentation.device.model.DisplayNativeDevice
 
 data class DeviceConnectionState(

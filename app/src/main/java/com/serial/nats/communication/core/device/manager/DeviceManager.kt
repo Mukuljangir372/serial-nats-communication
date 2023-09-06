@@ -1,4 +1,4 @@
-package com.serial.nats.communication.core.device
+package com.serial.nats.communication.core.device.manager
 
 interface DeviceManager {
     suspend fun getDevices(): List<NativeDevice>

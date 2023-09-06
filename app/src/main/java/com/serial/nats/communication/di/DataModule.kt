@@ -1,6 +1,6 @@
 package com.serial.nats.communication.di
 
-import com.serial.nats.communication.core.device.DeviceManager
+import com.serial.nats.communication.core.device.manager.DeviceManager
 import com.serial.nats.communication.data.DeviceRepositoryImpl
 import com.serial.nats.communication.domain.DeviceRepository
 import dagger.Module

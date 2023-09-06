@@ -2,7 +2,7 @@ package com.serial.nats.communication.presentation.device
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.serial.nats.communication.core.device.NativeDevice
+import com.serial.nats.communication.core.device.manager.NativeDevice
 import com.serial.nats.communication.domain.DeviceRepository
 import com.serial.nats.communication.presentation.device.model.DisplayNativeDevice
 import dagger.hilt.android.lifecycle.HiltViewModel

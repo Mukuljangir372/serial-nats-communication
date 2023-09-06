@@ -1,4 +1,4 @@
-package com.serial.nats.communication.core.device
+package com.serial.nats.communication.core.device.manager
 
 import android.hardware.usb.UsbDevice
 import com.hoho.android.usbserial.driver.UsbSerialDriver
