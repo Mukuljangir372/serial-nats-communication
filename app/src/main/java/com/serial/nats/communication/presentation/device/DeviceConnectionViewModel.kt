@@ -2,6 +2,8 @@ package com.serial.nats.communication.presentation.device
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.serial.nats.communication.core.device.exception.DeviceNotFoundException
+import com.serial.nats.communication.core.device.exception.DevicePermissionDeniedException
 import com.serial.nats.communication.core.device.manager.NativeDevice
 import com.serial.nats.communication.domain.DeviceRepository
 import com.serial.nats.communication.presentation.device.model.DisplayNativeDevice
@@ -27,11 +29,46 @@ class DeviceConnectionViewModel @Inject constructor(
         loadDevices()
     }
 
+    fun connectDevice() {
+        connectToDevice()
+    }
+
+    fun disconnectDevice() {
+        disconnectFromDevice()
+    }
+
     private fun loadDevices() {
         viewModelScope.launch {
             _state.update { it.copy(loading = true) }
             val modifiedState = getDevicesAsState(
-                state = _state, repository = deviceRepository
+                state = _state,
+                repository = deviceRepository
+            )
+            _state.update { modifiedState.copy(loading = false) }
+        }
+    }
+
+    private fun connectToDevice() {
+        if (_state.value.devices.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true) }
+            val modifiedState = connectDeviceAsState(
+                deviceId = _state.value.devices.first().id,
+                state = _state,
+                repository = deviceRepository
+            )
+            _state.update { modifiedState.copy(loading = false) }
+        }
+    }
+
+    private fun disconnectFromDevice() {
+        if (_state.value.devices.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true) }
+            val modifiedState = disconnectDeviceAsState(
+                deviceId = _state.value.devices.first().id,
+                state = _state,
+                repository = deviceRepository
             )
             _state.update { modifiedState.copy(loading = false) }
         }
@@ -89,6 +126,50 @@ class DeviceConnectionViewModel @Inject constructor(
         ): DeviceConnectionState {
             val devices = getDevices(repository)
             return state.value.copy(devices = devices)
+        }
+
+        private suspend fun connectDevice(
+            deviceId: String,
+            repository: DeviceRepository
+        ): NativeDevice {
+            return repository.openConnection(deviceId)
+        }
+
+        private suspend fun disconnectDevice(
+            deviceId: String,
+            repository: DeviceRepository
+        ): NativeDevice {
+            return repository.closeConnection(deviceId)
+        }
+
+        private suspend fun connectDeviceAsState(
+            deviceId: String,
+            repository: DeviceRepository,
+            state: StateFlow<DeviceConnectionState>
+        ): DeviceConnectionState {
+            return try {
+                val device = connectDevice(deviceId, repository)
+                state.value.copy(connectionDevice = device, deviceConnected = true)
+            } catch (e: DeviceNotFoundException) {
+                state.value.copy(errorMessage = e.localizedMessage)
+            } catch (e: DevicePermissionDeniedException) {
+                state.value.copy(errorMessage = e.localizedMessage, deviceRequirePermission = true)
+            }
+        }
+
+        private suspend fun disconnectDeviceAsState(
+            deviceId: String,
+            repository: DeviceRepository,
+            state: StateFlow<DeviceConnectionState>
+        ): DeviceConnectionState {
+            return try {
+                val device = disconnectDevice(deviceId, repository)
+                state.value.copy(connectionDevice = device, deviceConnected = false)
+            } catch (e: DeviceNotFoundException) {
+                state.value.copy(errorMessage = e.localizedMessage)
+            } catch (e: DevicePermissionDeniedException) {
+                state.value.copy(errorMessage = e.localizedMessage, deviceRequirePermission = true)
+            }
         }
     }
 }

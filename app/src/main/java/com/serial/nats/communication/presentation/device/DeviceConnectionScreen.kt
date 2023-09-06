@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -30,13 +31,19 @@ fun DeviceConnectionScreen() {
         viewModel.load()
     }
 
-    DeviceConnectionScreenContent(state = state)
+    DeviceConnectionScreenContent(
+        state = state,
+        connect = viewModel::connectDevice,
+        disconnect = viewModel::disconnectDevice
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DeviceConnectionScreenContent(
-    state: DeviceConnectionUiState
+    state: DeviceConnectionUiState,
+    connect: () -> Unit,
+    disconnect: () -> Unit
 ) {
     Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
         Column(
@@ -45,10 +52,18 @@ private fun DeviceConnectionScreenContent(
                 .padding(paddingValues)
         ) {
             DeviceList(state.devices)
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Loading(state.loading)
+
             Spacer(modifier = Modifier.height(12.dp))
             Error(state.errorMessage)
+
             Spacer(modifier = Modifier.height(12.dp))
             DeviceConnection(state.deviceConnected, state.connectionDevice)
+
+            Spacer(modifier = Modifier.height(12.dp))
+            DeviceActions(connected = state.deviceConnected, connect, disconnect)
         }
     }
 }
@@ -81,9 +96,39 @@ private fun DeviceConnection(connected: Boolean, device: DisplayNativeDevice?) {
     )
 }
 
+@Composable
+private fun Loading(loading: Boolean) {
+    Text(
+        text = "Loading: $loading",
+        color = Color.Blue
+    )
+}
+
+
+@Composable
+private fun DeviceActions(
+    connected: Boolean,
+    connect: () -> Unit,
+    disconnect: () -> Unit
+) {
+    if (!connected) {
+        Button(onClick = connect) {
+            Text(text = "Connect")
+        }
+    } else {
+        Button(onClick = disconnect) {
+            Text(text = "Disconnect")
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun ScreenPreview() {
     val state = DeviceConnectionStateResource.state
-    DeviceConnectionScreenContent(state = state)
+    DeviceConnectionScreenContent(
+        state = state,
+        connect = {},
+        disconnect = {}
+    )
 }
