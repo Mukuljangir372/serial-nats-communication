@@ -47,7 +47,7 @@ class DeviceManagerImpl(
         private fun getDevices(context: Context): List<NativeDevice> {
             val usbManager = getUsbManager(context)
             val prober = UsbSerialProber.getDefaultProber()
-            val devices = usbManager.deviceList.map { it.value }
+            val devices = usbManager.deviceList.mapNotNull { it.value }
             return convertDeviceListToNativeDeviceList(prober, devices)
         }
 
