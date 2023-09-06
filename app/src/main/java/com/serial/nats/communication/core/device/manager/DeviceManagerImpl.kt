@@ -3,12 +3,8 @@ package com.serial.nats.communication.core.device.manager
 import android.content.Context
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
-import com.hoho.android.usbserial.driver.CdcAcmSerialDriver
-import com.hoho.android.usbserial.driver.Ch34xSerialDriver
-import com.hoho.android.usbserial.driver.Cp21xxSerialDriver
 import com.hoho.android.usbserial.driver.FtdiSerialDriver
 import com.hoho.android.usbserial.driver.ProbeTable
-import com.hoho.android.usbserial.driver.ProlificSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import com.hoho.android.usbserial.driver.UsbSerialProber
@@ -58,12 +54,11 @@ class DeviceManagerImpl(
 
         private fun getCustomUsbProber(device: UsbDevice): UsbSerialProber {
             val table = ProbeTable()
-            table.addProduct(device.vendorId, device.productId, UsbSerialDriver::class.java)
             table.addProduct(device.vendorId, device.productId, FtdiSerialDriver::class.java)
-            table.addProduct(device.vendorId, device.productId, CdcAcmSerialDriver::class.java)
-            table.addProduct(device.vendorId, device.productId, Ch34xSerialDriver::class.java)
-            table.addProduct(device.vendorId, device.productId, Cp21xxSerialDriver::class.java)
-            table.addProduct(device.vendorId, device.productId, ProlificSerialDriver::class.java)
+//            table.addProduct(device.vendorId, device.productId, CdcAcmSerialDriver::class.java)
+//            table.addProduct(device.vendorId, device.productId, Ch34xSerialDriver::class.java)
+//            table.addProduct(device.vendorId, device.productId, Cp21xxSerialDriver::class.java)
+//            table.addProduct(device.vendorId, device.productId, ProlificSerialDriver::class.java)
             return UsbSerialProber(table)
         }
 
