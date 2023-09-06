@@ -160,6 +160,8 @@ class DeviceConnectionViewModel @Inject constructor(
                 state.value.copy(errorMessage = e.localizedMessage)
             } catch (e: DevicePermissionDeniedException) {
                 state.value.copy(errorMessage = e.localizedMessage, deviceRequirePermission = true)
+            } catch (e: Exception) {
+                state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
             }
         }
 
@@ -175,6 +177,8 @@ class DeviceConnectionViewModel @Inject constructor(
                 state.value.copy(errorMessage = e.localizedMessage)
             } catch (e: DevicePermissionDeniedException) {
                 state.value.copy(errorMessage = e.localizedMessage, deviceRequirePermission = true)
+            } catch (e: Exception) {
+                state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
             }
         }
     }
