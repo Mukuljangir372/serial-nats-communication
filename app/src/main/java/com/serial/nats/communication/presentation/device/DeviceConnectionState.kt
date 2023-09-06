@@ -6,8 +6,8 @@ import com.serial.nats.communication.presentation.device.model.DisplayNativeDevi
 data class DeviceConnectionState(
     val loading: Boolean,
     val errorMessage: String,
-    val devices: List<NativeDevice>,
-    val connectionDevice: NativeDevice?,
+    val nativeDevices: List<NativeDevice>,
+    val connectionNativeDevice: NativeDevice?,
     val deviceConnected: Boolean,
     val deviceRequirePermission: Boolean,
     val devicePermissionGranted: Boolean
@@ -16,8 +16,8 @@ data class DeviceConnectionState(
         val idle = DeviceConnectionState(
             loading = false,
             errorMessage = "",
-            devices = emptyList(),
-            connectionDevice = null,
+            nativeDevices = emptyList(),
+            connectionNativeDevice = null,
             deviceConnected = false,
             deviceRequirePermission = false,
             devicePermissionGranted = false

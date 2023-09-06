@@ -2,7 +2,7 @@ package com.serial.nats.communication.di
 
 import android.content.Context
 import com.serial.nats.communication.core.device.manager.DeviceManager
-import com.serial.nats.communication.core.device.manager.NativeDeviceManager
+import com.serial.nats.communication.core.device.manager.DeviceManagerImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -17,15 +17,15 @@ import javax.inject.Singleton
 interface AppModule {
     @Singleton
     @Binds
-    fun bindDeviceManager(manager: NativeDeviceManager): DeviceManager
+    fun bindDeviceManager(manager: DeviceManagerImpl): DeviceManager
 
     companion object {
         @Provides
         @Singleton
         fun provideDeviceManager(
             @ApplicationContext context: Context
-        ): NativeDeviceManager {
-            return NativeDeviceManager(
+        ): DeviceManagerImpl {
+            return DeviceManagerImpl(
                 context = context, dispatcher = Dispatchers.Default
             )
         }

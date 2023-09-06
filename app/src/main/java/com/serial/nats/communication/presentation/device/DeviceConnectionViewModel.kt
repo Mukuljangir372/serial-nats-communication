@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.serial.nats.communication.core.device.exception.DeviceNotFoundException
 import com.serial.nats.communication.core.device.exception.DevicePermissionDeniedException
 import com.serial.nats.communication.core.device.manager.NativeDevice
+import com.serial.nats.communication.core.device.manager.activity.ActivityDeviceManagerFactory
 import com.serial.nats.communication.domain.DeviceRepository
 import com.serial.nats.communication.presentation.device.model.DisplayNativeDevice
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +21,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DeviceConnectionViewModel @Inject constructor(
-    private val deviceRepository: DeviceRepository
+    private val deviceRepository: DeviceRepository,
+    private val activityDeviceManagerFactory: ActivityDeviceManagerFactory
 ) : ViewModel() {
     private val _state = MutableStateFlow(DeviceConnectionState.idle)
     val uiState get() = convertStateToUiStateFlow(_state, viewModelScope)
@@ -49,11 +51,11 @@ class DeviceConnectionViewModel @Inject constructor(
     }
 
     private fun connectToDevice() {
-        if (_state.value.devices.isEmpty()) return
+        if (_state.value.nativeDevices.isEmpty()) return
         viewModelScope.launch {
             _state.update { it.copy(loading = true) }
             val modifiedState = connectDeviceAsState(
-                deviceId = _state.value.devices.first().id,
+                deviceId = _state.value.nativeDevices.first().id,
                 state = _state,
                 repository = deviceRepository
             )
@@ -62,16 +64,20 @@ class DeviceConnectionViewModel @Inject constructor(
     }
 
     private fun disconnectFromDevice() {
-        if (_state.value.devices.isEmpty()) return
+        if (_state.value.nativeDevices.isEmpty()) return
         viewModelScope.launch {
             _state.update { it.copy(loading = true) }
             val modifiedState = disconnectDeviceAsState(
-                deviceId = _state.value.devices.first().id,
+                deviceId = _state.value.nativeDevices.first().id,
                 state = _state,
                 repository = deviceRepository
             )
             _state.update { modifiedState.copy(loading = false) }
         }
+    }
+
+    fun getActivityDeviceManagerFactory(): ActivityDeviceManagerFactory {
+        return activityDeviceManagerFactory
     }
 
     companion object {
@@ -91,12 +97,12 @@ class DeviceConnectionViewModel @Inject constructor(
         private fun convertStateToUiState(
             state: DeviceConnectionState
         ): DeviceConnectionUiState {
-            val connectionDevice = if (state.connectionDevice != null) {
-                convertDeviceToDisplayDevice(state.connectionDevice)
+            val connectionDevice = if (state.connectionNativeDevice != null) {
+                convertDeviceToDisplayDevice(state.connectionNativeDevice)
             } else null
             return DeviceConnectionUiState(
                 loading = state.loading,
-                devices = state.devices.map { convertDeviceToDisplayDevice(it) },
+                devices = state.nativeDevices.map { convertDeviceToDisplayDevice(it) },
                 errorMessage = state.errorMessage,
                 connectionDevice = connectionDevice,
                 deviceConnected = state.deviceConnected,
@@ -106,11 +112,11 @@ class DeviceConnectionViewModel @Inject constructor(
         }
 
         private fun convertDeviceToDisplayDevice(
-            device: NativeDevice
+            nativeDevice: NativeDevice
         ): DisplayNativeDevice {
             return DisplayNativeDevice(
-                id = device.id,
-                name = device.name
+                id = nativeDevice.id,
+                name = nativeDevice.name
             )
         }
 
@@ -125,7 +131,7 @@ class DeviceConnectionViewModel @Inject constructor(
             repository: DeviceRepository
         ): DeviceConnectionState {
             val devices = getDevices(repository)
-            return state.value.copy(devices = devices)
+            return state.value.copy(nativeDevices = devices)
         }
 
         private suspend fun connectDevice(
@@ -149,7 +155,7 @@ class DeviceConnectionViewModel @Inject constructor(
         ): DeviceConnectionState {
             return try {
                 val device = connectDevice(deviceId, repository)
-                state.value.copy(connectionDevice = device, deviceConnected = true)
+                state.value.copy(connectionNativeDevice = device, deviceConnected = true)
             } catch (e: DeviceNotFoundException) {
                 state.value.copy(errorMessage = e.localizedMessage)
             } catch (e: DevicePermissionDeniedException) {
@@ -164,7 +170,7 @@ class DeviceConnectionViewModel @Inject constructor(
         ): DeviceConnectionState {
             return try {
                 val device = disconnectDevice(deviceId, repository)
-                state.value.copy(connectionDevice = device, deviceConnected = false)
+                state.value.copy(connectionNativeDevice = device, deviceConnected = false)
             } catch (e: DeviceNotFoundException) {
                 state.value.copy(errorMessage = e.localizedMessage)
             } catch (e: DevicePermissionDeniedException) {

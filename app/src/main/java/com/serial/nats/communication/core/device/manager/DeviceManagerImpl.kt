@@ -11,13 +11,19 @@ import com.serial.nats.communication.core.device.exception.DevicePermissionDenie
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
-class NativeDeviceManager(
+class DeviceManagerImpl(
     private val context: Context,
     private val dispatcher: CoroutineDispatcher
 ) : DeviceManager {
     override suspend fun getDevices(): List<NativeDevice> {
         return withContext(dispatcher) {
             getDevices(context)
+        }
+    }
+
+    override suspend fun getDevice(id: String): NativeDevice {
+        return withContext(dispatcher) {
+            getDeviceById(context, id)
         }
     }
 

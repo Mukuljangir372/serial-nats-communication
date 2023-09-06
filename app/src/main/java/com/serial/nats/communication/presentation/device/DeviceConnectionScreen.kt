@@ -1,5 +1,6 @@
 package com.serial.nats.communication.presentation.device
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,8 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -27,6 +30,8 @@ fun DeviceConnectionScreen() {
     val viewModel = hiltViewModel<DeviceConnectionViewModel>()
     val state by viewModel.uiState.collectAsState()
 
+    DeviceManager(viewModel = viewModel, state = state)
+
     LaunchedEffect(Unit) {
         viewModel.load()
     }
@@ -36,6 +41,22 @@ fun DeviceConnectionScreen() {
         connect = viewModel::connectDevice,
         disconnect = viewModel::disconnectDevice
     )
+}
+
+@Composable
+private fun DeviceManager(
+    viewModel: DeviceConnectionViewModel,
+    state: DeviceConnectionUiState
+) {
+    val context = LocalContext.current
+    val manager = remember(context) {
+        viewModel.getActivityDeviceManagerFactory().create(context as Activity)
+    }
+    LaunchedEffect(state.deviceRequirePermission) {
+        if (state.deviceRequirePermission && state.connectionDevice != null) {
+            manager.requestDevicePermission(state.connectionDevice.id)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
