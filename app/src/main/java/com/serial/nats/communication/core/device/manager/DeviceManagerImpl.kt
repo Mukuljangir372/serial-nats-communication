@@ -64,8 +64,7 @@ class DeviceManagerImpl(
                 driver.ports.map { port ->
                     convertDriverToNativeDevice(
                         driver = driver,
-                        port = port,
-                        device = device
+                        port = port
                     )
                 }
             }.flatten()
@@ -74,14 +73,13 @@ class DeviceManagerImpl(
         private fun convertDriverToNativeDevice(
             driver: UsbSerialDriver,
             port: UsbSerialPort,
-            device: UsbDevice
         ): NativeDevice {
             return NativeDevice(
                 id = "${driver.device.deviceId}",
                 name = driver.device.deviceName,
                 port = port,
                 driver = driver,
-                device = device,
+                device = driver.device,
                 connected = port.isOpen
             )
         }
