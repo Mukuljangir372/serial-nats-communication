@@ -3,6 +3,8 @@ package com.serial.nats.communication.core.device.manager
 import android.content.Context
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
+import com.hoho.android.usbserial.driver.FtdiSerialDriver
+import com.hoho.android.usbserial.driver.ProbeTable
 import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import com.hoho.android.usbserial.driver.UsbSerialProber
@@ -46,9 +48,22 @@ class DeviceManagerImpl(
     companion object {
         private fun getDevices(context: Context): List<NativeDevice> {
             val usbManager = getUsbManager(context)
-            val prober = UsbSerialProber.getDefaultProber()
             val devices = usbManager.deviceList.mapNotNull { it.value }
-            return convertDeviceListToNativeDeviceList(prober, devices)
+            return convertDeviceListToNativeDeviceList(devices)
+        }
+
+        private fun getCustomUsbProber(device: UsbDevice): UsbSerialProber {
+            val table = ProbeTable()
+            table.addProduct(device.vendorId, device.productId, FtdiSerialDriver::class.java)
+            return UsbSerialProber(table)
+        }
+
+        private fun getDeviceDriver(device: UsbDevice): UsbSerialDriver {
+            val defaultSerialProber = UsbSerialProber.getDefaultProber()
+            if (defaultSerialProber.probeDevice(device) != null) {
+                return defaultSerialProber.probeDevice(device)
+            }
+            return getCustomUsbProber(device).probeDevice(device)
         }
 
         private fun getUsbManager(context: Context): UsbManager {
@@ -56,11 +71,10 @@ class DeviceManagerImpl(
         }
 
         private fun convertDeviceListToNativeDeviceList(
-            prober: UsbSerialProber,
             deviceList: List<UsbDevice>,
         ): List<NativeDevice> {
             return deviceList.map { device ->
-                val driver = prober.probeDevice(device)
+                val driver = getDeviceDriver(device)
                 driver.ports.map { port ->
                     convertDriverToNativeDevice(
                         driver = driver,
