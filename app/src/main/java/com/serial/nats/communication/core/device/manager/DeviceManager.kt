@@ -5,4 +5,6 @@ interface DeviceManager {
     suspend fun getDevice(id: String): NativeDevice
     suspend fun openConnection(deviceId: String): NativeDevice
     suspend fun closeConnection(deviceId: String): NativeDevice
+    suspend fun readBytes(deviceId: String): ByteArray
+    suspend fun writeBytes(deviceId: String, bytes: ByteArray)
 }

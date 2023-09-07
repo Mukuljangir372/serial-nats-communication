@@ -31,4 +31,21 @@ class DeviceRepositoryImpl(
             deviceManager.closeConnection(deviceId)
         }
     }
+
+    override suspend fun readBytes(
+        deviceId: String
+    ): ByteArray {
+        return withContext(dispatcher) {
+            deviceManager.readBytes(deviceId)
+        }
+    }
+
+    override suspend fun writeBytes(
+        deviceId: String,
+        bytes: ByteArray
+    ) {
+        return withContext(dispatcher) {
+            deviceManager.writeBytes(deviceId, bytes)
+        }
+    }
 }

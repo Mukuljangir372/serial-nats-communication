@@ -8,6 +8,7 @@ import com.hoho.android.usbserial.driver.ProbeTable
 import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import com.hoho.android.usbserial.driver.UsbSerialProber
+import com.serial.nats.communication.core.device.exception.DeviceConnectionClosedException
 import com.serial.nats.communication.core.device.exception.DeviceNotFoundException
 import com.serial.nats.communication.core.device.exception.DevicePermissionDeniedException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -45,7 +46,21 @@ class DeviceManagerImpl(
         }
     }
 
+    override suspend fun readBytes(deviceId: String): ByteArray {
+        return withContext(dispatcher) {
+            readBytes(deviceId, context)
+        }
+    }
+
+    override suspend fun writeBytes(deviceId: String, bytes: ByteArray) {
+        return withContext(dispatcher) {
+            writeBytes(deviceId, bytes, context)
+        }
+    }
+
     companion object {
+        private const val IO_TIMEOUT_MILLIS = 2000
+
         private fun getDevices(context: Context): List<NativeDevice> {
             val usbManager = getUsbManager(context)
             val devices = usbManager.deviceList.mapNotNull { it.value }
@@ -55,10 +70,6 @@ class DeviceManagerImpl(
         private fun getCustomUsbProber(device: UsbDevice): UsbSerialProber {
             val table = ProbeTable()
             table.addProduct(device.vendorId, device.productId, FtdiSerialDriver::class.java)
-//            table.addProduct(device.vendorId, device.productId, CdcAcmSerialDriver::class.java)
-//            table.addProduct(device.vendorId, device.productId, Ch34xSerialDriver::class.java)
-//            table.addProduct(device.vendorId, device.productId, Cp21xxSerialDriver::class.java)
-//            table.addProduct(device.vendorId, device.productId, ProlificSerialDriver::class.java)
             return UsbSerialProber(table)
         }
 
@@ -129,8 +140,6 @@ class DeviceManagerImpl(
             requireDevicePermission(usbManager, device.device)
             val usbConnection = usbManager.openDevice(device.device)
             device.port.open(usbConnection)
-//            val ioManager = SerialInputOutputManager(device.port)
-//            ioManager.start()
             return device.copy(connected = true)
         }
 
@@ -143,6 +152,27 @@ class DeviceManagerImpl(
             requireDevicePermission(usbManager, device.device)
             device.port.close()
             return device.copy(connected = false)
+        }
+
+        private fun readBytes(
+            deviceId: String,
+            context: Context
+        ): ByteArray {
+            val device = getDeviceById(context, deviceId)
+            if (!device.port.isOpen) throw DeviceConnectionClosedException(deviceId)
+            val bytes = ByteArray(8192)
+            val length = device.port.read(bytes, IO_TIMEOUT_MILLIS)
+            return bytes.copyOf(length)
+        }
+
+        private fun writeBytes(
+            deviceId: String,
+            bytes: ByteArray,
+            context: Context
+        ) {
+            val device = getDeviceById(context, deviceId)
+            if (!device.port.isOpen) throw DeviceConnectionClosedException(deviceId)
+            device.port.write(bytes, IO_TIMEOUT_MILLIS)
         }
     }
 }
