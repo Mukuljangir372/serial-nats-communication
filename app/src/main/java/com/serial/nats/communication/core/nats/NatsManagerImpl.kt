@@ -1,22 +1,24 @@
 package com.serial.nats.communication.core.nats
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.serial.nats.communication.R
 import com.serial.nats.communication.core.nats.exception.NatsNotConnectedException
 import io.nats.client.Connection
 import io.nats.client.Dispatcher
 import io.nats.client.Nats
 import io.nats.client.Options
-import java.io.FileInputStream
 import java.time.Duration
 import java.util.Properties
 
 class NatsManagerImpl(
-    private val config: NatsConfig
+    private val config: NatsConfig,
+    context: Context
 ) : NatsManager {
     @SuppressLint("NewApi")
-    private val options = getOptionBuilder(config).build()
+    private val options = getOptionBuilder(config, context).build()
     private var connection: Connection? = null
     private var listener: NatsListener? = null
     private var subjectDispatcher: Dispatcher? = null
@@ -54,20 +56,19 @@ class NatsManagerImpl(
 
     companion object {
         @RequiresApi(Build.VERSION_CODES.O)
-        private fun getOptionBuilder(config: NatsConfig): Options.Builder {
+        private fun getOptionBuilder(config: NatsConfig, context: Context): Options.Builder {
             return Options.Builder()
                 .userInfo(config.username, config.password)
                 .connectionTimeout(Duration.ofMinutes(10))
                 .maxReconnects(5)
                 .server(config.url)
-                .properties(getCertificateProperty())
+                .properties(getCertificateProperty(context))
         }
 
-        private fun getCertificateProperty(): Properties {
+        private fun getCertificateProperty(context: Context): Properties {
+            val path = context.resources.openRawResource(R.raw.ca)
             val properties = Properties()
-            val rootPath = "/Users/mukuljangir/Documents/serialnatscommunication"
-            val fileInputStream = FileInputStream("$rootPath/ca.pem")
-            properties.load(fileInputStream)
+            properties.load(path)
             return properties
         }
 

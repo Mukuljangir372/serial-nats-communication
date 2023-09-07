@@ -53,9 +53,13 @@ interface AppModule {
 
         @Provides
         @Singleton
-        fun provideNatsManager(config: NatsConfig): NatsManagerImpl {
+        fun provideNatsManager(
+            config: NatsConfig,
+            @ApplicationContext context: Context
+        ): NatsManagerImpl {
             return NatsManagerImpl(
-                config = config
+                config = config,
+                context = context
             )
         }
     }
