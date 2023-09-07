@@ -1,5 +1,6 @@
 package com.serial.nats.communication.core.nats
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.serial.nats.communication.core.nats.exception.NatsNotConnectedException
@@ -12,6 +13,7 @@ import java.time.Duration
 class NatsManagerImpl(
     private val config: NatsConfig
 ) : NatsManager {
+    @SuppressLint("NewApi")
     private val options = getOptionBuilder(config).build()
     private var connection: Connection? = null
     private var listener: NatsListener? = null
