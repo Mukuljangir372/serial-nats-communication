@@ -65,7 +65,8 @@ class NatsManagerImpl(
 
         private fun getCertificateProperty(): Properties {
             val properties = Properties()
-            val fileInputStream = FileInputStream("ca.pem")
+            val rootPath = "/Users/mukuljangir/Documents/serialnatscommunication"
+            val fileInputStream = FileInputStream("$rootPath/ca.pem")
             properties.load(fileInputStream)
             return properties
         }
