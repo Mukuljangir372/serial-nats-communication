@@ -1,10 +1,13 @@
 package com.serial.nats.communication.core.nats
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.serial.nats.communication.core.nats.exception.NatsNotConnectedException
 import io.nats.client.Connection
 import io.nats.client.Dispatcher
 import io.nats.client.Nats
 import io.nats.client.Options
+import java.time.Duration
 
 class NatsManagerImpl(
     private val config: NatsConfig
@@ -46,9 +49,12 @@ class NatsManagerImpl(
     }
 
     companion object {
+        @RequiresApi(Build.VERSION_CODES.O)
         private fun getOptionBuilder(config: NatsConfig): Options.Builder {
             return Options.Builder()
                 .userInfo(config.username, config.password)
+                .connectionTimeout(Duration.ofMinutes(10))
+                .maxReconnects(5)
                 .server(config.url)
         }
 
