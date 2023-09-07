@@ -24,6 +24,8 @@ object DeviceConnectionStateResource {
         connectionDevice = null,
         deviceConnected = false,
         devicePermissionGranted = false,
-        deviceRequirePermission = false
+        deviceRequirePermission = false,
+        bytesWrite = "",
+        bytesRead = ""
     )
 }

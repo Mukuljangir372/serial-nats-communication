@@ -1,8 +1,12 @@
 package com.serial.nats.communication.di
 
 import android.content.Context
+import com.serial.nats.communication.BuildConfig
 import com.serial.nats.communication.core.device.manager.DeviceManager
 import com.serial.nats.communication.core.device.manager.DeviceManagerImpl
+import com.serial.nats.communication.core.nats.NatsConfig
+import com.serial.nats.communication.core.nats.NatsManager
+import com.serial.nats.communication.core.nats.NatsManagerImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -19,6 +23,10 @@ interface AppModule {
     @Binds
     fun bindDeviceManager(manager: DeviceManagerImpl): DeviceManager
 
+    @Singleton
+    @Binds
+    fun bindNatsManager(managerImpl: NatsManagerImpl): NatsManager
+
     companion object {
         @Provides
         @Singleton
@@ -26,7 +34,28 @@ interface AppModule {
             @ApplicationContext context: Context
         ): DeviceManagerImpl {
             return DeviceManagerImpl(
-                context = context, dispatcher = Dispatchers.Default
+                context = context,
+                dispatcher = Dispatchers.Default
+            )
+        }
+
+        @Provides
+        @Singleton
+        fun provideNatsConfig(): NatsConfig {
+            return NatsConfig(
+                username = BuildConfig.NATS_USERNAME,
+                password = BuildConfig.NATS_PASSWORD,
+                url = BuildConfig.NATS_URL,
+                publishToSubject = BuildConfig.NATS_PUBLISH_TO_SUBJECT,
+                subscribeToSubject = BuildConfig.NATS_SUBSCRIBE_TO_SUBJECT
+            )
+        }
+
+        @Provides
+        @Singleton
+        fun provideNatsManager(config: NatsConfig): NatsManagerImpl {
+            return NatsManagerImpl(
+                config = config
             )
         }
     }

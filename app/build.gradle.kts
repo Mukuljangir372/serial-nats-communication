@@ -1,9 +1,13 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     id("com.android.application")
     kotlin("android")
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
 }
+
+val localProperties = gradleLocalProperties(rootDir)
 
 android {
     namespace = "com.serial.nats.communication"
@@ -20,6 +24,20 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        buildConfigField("String", "NATS_USERNAME", localProperties.getProperty("NATS_USERNAME"))
+        buildConfigField("String", "NATS_PASSWORD", localProperties.getProperty("NATS_PASSWORD"))
+        buildConfigField("String", "NATS_URL", localProperties.getProperty("NATS_URL"))
+        buildConfigField(
+            "String",
+            "NATS_PUBLISH_TO_SUBJECT",
+            localProperties.getProperty("NATS_PUBLISH_TO_SUBJECT")
+        )
+        buildConfigField(
+            "String",
+            "NATS_SUBSCRIBE_TO_SUBJECT",
+            localProperties.getProperty("NATS_SUBSCRIBE_TO_SUBJECT")
+        )
     }
 
     buildTypes {
@@ -43,6 +61,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
@@ -83,7 +102,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
+    // serial communication and nats
     implementation("com.github.mik3y:usb-serial-for-android:3.6.0")
+    implementation("io.nats:jnats:2.16.14")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
