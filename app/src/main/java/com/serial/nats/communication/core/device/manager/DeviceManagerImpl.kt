@@ -8,7 +8,6 @@ import com.hoho.android.usbserial.driver.ProbeTable
 import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import com.hoho.android.usbserial.driver.UsbSerialProber
-import com.serial.nats.communication.core.device.exception.DeviceConnectionClosedException
 import com.serial.nats.communication.core.device.exception.DeviceNotFoundException
 import com.serial.nats.communication.core.device.exception.DevicePermissionDeniedException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -159,7 +158,7 @@ class DeviceManagerImpl(
             context: Context
         ): ByteArray {
             val device = getDeviceById(context, deviceId)
-            if (!device.port.isOpen) throw DeviceConnectionClosedException(deviceId)
+            if (!device.port.isOpen) openDeviceConnection(context, deviceId)
             val bytes = ByteArray(8192)
             val length = device.port.read(bytes, IO_TIMEOUT_MILLIS)
             return bytes.copyOf(length)
@@ -171,7 +170,7 @@ class DeviceManagerImpl(
             context: Context
         ) {
             val device = getDeviceById(context, deviceId)
-            if (!device.port.isOpen) throw DeviceConnectionClosedException(deviceId)
+            if (!device.port.isOpen) openDeviceConnection(context, deviceId)
             device.port.write(bytes, IO_TIMEOUT_MILLIS)
         }
     }
