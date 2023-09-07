@@ -38,7 +38,7 @@ data class DeviceConnectionUiState(
     val deviceRequirePermission: Boolean,
     val devicePermissionGranted: Boolean,
     val bytesRead: String,
-    val bytesWrite: String,
+    val bytesWrite: String
 ) {
     companion object {
         val idle = DeviceConnectionUiState(
@@ -51,6 +51,24 @@ data class DeviceConnectionUiState(
             devicePermissionGranted = false,
             bytesRead = "",
             bytesWrite = ""
+        )
+    }
+}
+
+data class NatsState(
+    val loading: Boolean,
+    val connected: Boolean,
+    val writingBytes: String,
+    val readingBytes: String,
+    val errorMessage: String
+) {
+    companion object {
+        val idle = NatsState(
+            loading = false,
+            connected = false,
+            writingBytes = "",
+            readingBytes = "",
+            errorMessage = ""
         )
     }
 }

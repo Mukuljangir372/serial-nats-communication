@@ -6,29 +6,40 @@ import com.serial.nats.communication.core.device.exception.DeviceNotFoundExcepti
 import com.serial.nats.communication.core.device.exception.DevicePermissionDeniedException
 import com.serial.nats.communication.core.device.manager.NativeDevice
 import com.serial.nats.communication.core.device.manager.activity.ActivityDeviceManagerFactory
+import com.serial.nats.communication.core.nats.NatsListener
+import com.serial.nats.communication.core.nats.NatsManager
 import com.serial.nats.communication.domain.DeviceRepository
 import com.serial.nats.communication.presentation.device.model.DisplayNativeDevice
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class DeviceConnectionViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
-    private val activityDeviceManagerFactory: ActivityDeviceManagerFactory
+    private val activityDeviceManagerFactory: ActivityDeviceManagerFactory,
+    private val natsManager: NatsManager
 ) : ViewModel() {
     private val _state = MutableStateFlow(DeviceConnectionState.idle)
     val uiState get() = convertStateToUiStateFlow(_state, viewModelScope)
 
+    private val _natsState = MutableStateFlow(NatsState.idle)
+    val natsState get() = _natsState.asStateFlow()
+
     fun load() {
         loadDevices()
+        connectToNats()
     }
 
     fun connectDevice() {
@@ -39,12 +50,16 @@ class DeviceConnectionViewModel @Inject constructor(
         disconnectFromDevice()
     }
 
-    fun readBytes() {
+    fun readBytesFromDeviceManually() {
         readBytesFromDevice()
     }
 
-    fun writeBytes() {
+    fun writeBytesToDeviceManually() {
         writeBytesToDevice()
+    }
+
+    fun writeBytesToNatsManually() {
+        writeBytesToNats()
     }
 
     private fun loadDevices() {
@@ -109,6 +124,36 @@ class DeviceConnectionViewModel @Inject constructor(
                 byteArray = device.name.toByteArray()
             )
             _state.update { modifiedState.copy(loading = false) }
+        }
+    }
+
+    private fun connectToNats() {
+        viewModelScope.launch {
+            _natsState.update { it.copy(loading = true) }
+            val modifiedState = connectToNatsAsState(
+                manager = natsManager,
+                state = natsState,
+                listener = object : NatsListener {
+                    override fun onSubjectDataReceive(data: ByteArray) {
+                        _natsState.update { it.copy(readingBytes = data.toString()) }
+                    }
+                },
+                dispatcher = Dispatchers.Default //should be inject
+            )
+            _natsState.update { modifiedState.copy(loading = false) }
+        }
+    }
+
+    private fun writeBytesToNats() {
+        viewModelScope.launch {
+            _natsState.update { it.copy(loading = true) }
+            val modifiedState = writeBytesToNats(
+                manager = natsManager,
+                state = natsState,
+                byteArray = _state.value.bytesRead.toByteArray(),
+                dispatcher = Dispatchers.Default //should be inject
+            )
+            _natsState.update { modifiedState.copy(loading = false) }
         }
     }
 
@@ -262,6 +307,38 @@ class DeviceConnectionViewModel @Inject constructor(
                 state.value.copy(bytesWrite = byteArray.toString())
             } catch (e: Exception) {
                 state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
+            }
+        }
+
+        private suspend fun connectToNatsAsState(
+            manager: NatsManager,
+            state: StateFlow<NatsState>,
+            listener: NatsListener,
+            dispatcher: CoroutineDispatcher
+        ): NatsState {
+            return withContext(dispatcher) {
+                try {
+                    manager.connect(listener)
+                    state.value.copy(connected = true)
+                } catch (e: Exception) {
+                    state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
+                }
+            }
+        }
+
+        private suspend fun writeBytesToNats(
+            manager: NatsManager,
+            state: StateFlow<NatsState>,
+            byteArray: ByteArray,
+            dispatcher: CoroutineDispatcher
+        ): NatsState {
+            return withContext(dispatcher) {
+                try {
+                    manager.publish(byteArray)
+                    state.value.copy(writingBytes = byteArray.toString())
+                } catch (e: Exception) {
+                    state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
+                }
             }
         }
     }

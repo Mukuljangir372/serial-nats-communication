@@ -30,6 +30,7 @@ import com.serial.nats.communication.presentation.device.resource.DeviceConnecti
 fun DeviceConnectionScreen() {
     val viewModel = hiltViewModel<DeviceConnectionViewModel>()
     val state by viewModel.uiState.collectAsState()
+    val natsState by viewModel.natsState.collectAsState()
 
     DeviceManager(viewModel = viewModel, state = state)
 
@@ -41,8 +42,10 @@ fun DeviceConnectionScreen() {
         state = state,
         connect = viewModel::connectDevice,
         disconnect = viewModel::disconnectDevice,
-        readBytes = viewModel::readBytes,
-        writeBytes = viewModel::writeBytes
+        readBytesFromDevice = viewModel::readBytesFromDeviceManually,
+        writeBytesToDevice = viewModel::writeBytesToDeviceManually,
+        natsState = natsState,
+        writeBytesToNats = viewModel::writeBytesToNatsManually
     )
 }
 
@@ -66,10 +69,12 @@ private fun DeviceManager(
 @Composable
 private fun DeviceConnectionScreenContent(
     state: DeviceConnectionUiState,
+    natsState: NatsState,
     connect: () -> Unit,
     disconnect: () -> Unit,
-    readBytes: () -> Unit,
-    writeBytes: () -> Unit
+    readBytesFromDevice: () -> Unit,
+    writeBytesToDevice: () -> Unit,
+    writeBytesToNats: () -> Unit,
 ) {
     Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
         Column(
@@ -78,27 +83,18 @@ private fun DeviceConnectionScreenContent(
                 .padding(paddingValues)
         ) {
             DeviceList(state.devices)
-
-            Spacer(modifier = Modifier.height(12.dp))
             Loading(state.loading)
-
-            Spacer(modifier = Modifier.height(12.dp))
             Error(state.errorMessage)
-
-            Spacer(modifier = Modifier.height(12.dp))
             DeviceConnection(state.deviceConnected, state.connectionDevice)
-
-            Spacer(modifier = Modifier.height(12.dp))
             DeviceActions(
                 connected = state.deviceConnected,
                 connect = connect,
                 disconnect = disconnect,
-                readBytes = readBytes,
-                writeBytes = writeBytes
+                readBytes = readBytesFromDevice,
+                writeBytes = writeBytesToDevice
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-            Bytes(bytesRead = state.bytesRead, bytesWrite = state.bytesWrite)
+            DeviceBytes(bytesRead = state.bytesRead, bytesWrite = state.bytesWrite)
+            Nats(state = natsState, writeBytes = writeBytesToNats)
         }
     }
 }
@@ -140,14 +136,14 @@ private fun Loading(loading: Boolean) {
 }
 
 @Composable
-private fun Bytes(bytesRead: String, bytesWrite: String) {
+private fun DeviceBytes(bytesRead: String, bytesWrite: String) {
     Text(
-        text = "Bytes Read: $bytesRead",
+        text = "Device Bytes Read: $bytesRead",
         maxLines = 5,
         overflow = TextOverflow.Ellipsis
     )
     Text(
-        text = "Bytes Write: $bytesWrite",
+        text = "Device Bytes Write: $bytesWrite",
         maxLines = 5,
         overflow = TextOverflow.Ellipsis
     )
@@ -170,11 +166,39 @@ private fun DeviceActions(
             Text(text = "Disconnect")
         }
         Button(onClick = readBytes) {
-            Text(text = "Read Bytes")
+            Text(text = "Read Bytes From Device")
         }
         Button(onClick = writeBytes) {
-            Text(text = "Write Bytes")
+            Text(text = "Write Bytes To Device")
         }
+    }
+}
+
+@Composable
+private fun Nats(
+    state: NatsState,
+    writeBytes: () -> Unit
+) {
+    Text(
+        text = "Nats",
+        style = MaterialTheme.typography.headlineMedium,
+        color = Color.Blue
+    )
+    Text(text = "Nats Connected: ${state.connected}")
+    Text(text = "Nats Loading: ${state.loading}")
+    Text(text = "Nats Error: ${state.errorMessage}")
+    Text(
+        text = "Nats Bytes Write: ${state.writingBytes}",
+        maxLines = 5,
+        overflow = TextOverflow.Ellipsis
+    )
+    Text(
+        text = "Nats Bytes Read: ${state.readingBytes}",
+        maxLines = 5,
+        overflow = TextOverflow.Ellipsis
+    )
+    Button(onClick = writeBytes) {
+        Text(text = "Write Bytes To Nats")
     }
 }
 
@@ -186,7 +210,9 @@ private fun ScreenPreview() {
         state = state,
         connect = {},
         disconnect = {},
-        readBytes = {},
-        writeBytes = {}
+        readBytesFromDevice = {},
+        writeBytesToDevice = {},
+        natsState = NatsState.idle,
+        writeBytesToNats = {}
     )
 }
