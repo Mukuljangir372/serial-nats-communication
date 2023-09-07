@@ -10,7 +10,9 @@ data class DeviceConnectionState(
     val connectionDevice: NativeDevice?,
     val deviceConnected: Boolean,
     val deviceRequirePermission: Boolean,
-    val devicePermissionGranted: Boolean
+    val devicePermissionGranted: Boolean,
+    val bytesRead: String,
+    val bytesWrite: String,
 ) {
     companion object {
         val idle = DeviceConnectionState(
@@ -20,7 +22,9 @@ data class DeviceConnectionState(
             connectionDevice = null,
             deviceConnected = false,
             deviceRequirePermission = false,
-            devicePermissionGranted = false
+            devicePermissionGranted = false,
+            bytesRead = "",
+            bytesWrite = ""
         )
     }
 }
@@ -32,7 +36,9 @@ data class DeviceConnectionUiState(
     val connectionDevice: DisplayNativeDevice?,
     val deviceConnected: Boolean,
     val deviceRequirePermission: Boolean,
-    val devicePermissionGranted: Boolean
+    val devicePermissionGranted: Boolean,
+    val bytesRead: String,
+    val bytesWrite: String,
 ) {
     companion object {
         val idle = DeviceConnectionUiState(
@@ -42,7 +48,9 @@ data class DeviceConnectionUiState(
             connectionDevice = null,
             deviceConnected = false,
             deviceRequirePermission = false,
-            devicePermissionGranted = false
+            devicePermissionGranted = false,
+            bytesRead = "",
+            bytesWrite = ""
         )
     }
 }

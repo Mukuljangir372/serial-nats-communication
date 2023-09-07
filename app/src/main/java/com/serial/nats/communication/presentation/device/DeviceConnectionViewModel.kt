@@ -39,6 +39,14 @@ class DeviceConnectionViewModel @Inject constructor(
         disconnectFromDevice()
     }
 
+    fun readBytes() {
+        readBytesFromDevice()
+    }
+
+    fun writeBytes() {
+        writeBytesToDevice()
+    }
+
     private fun loadDevices() {
         viewModelScope.launch {
             _state.update { it.copy(loading = true) }
@@ -76,6 +84,34 @@ class DeviceConnectionViewModel @Inject constructor(
         }
     }
 
+    private fun readBytesFromDevice() {
+        if (_state.value.devices.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true) }
+            val modifiedState = readBytesAsState(
+                deviceId = _state.value.devices.first().id,
+                state = _state,
+                repository = deviceRepository
+            )
+            _state.update { modifiedState.copy(loading = false) }
+        }
+    }
+
+    private fun writeBytesToDevice() {
+        if (_state.value.devices.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true) }
+            val device = _state.value.devices.first()
+            val modifiedState = writeBytesAsState(
+                deviceId = device.id,
+                state = _state,
+                repository = deviceRepository,
+                byteArray = device.name.toByteArray()
+            )
+            _state.update { modifiedState.copy(loading = false) }
+        }
+    }
+
     fun getActivityDeviceManagerFactory(): ActivityDeviceManagerFactory {
         return activityDeviceManagerFactory
     }
@@ -107,7 +143,9 @@ class DeviceConnectionViewModel @Inject constructor(
                 connectionDevice = connectionDevice,
                 deviceConnected = state.deviceConnected,
                 deviceRequirePermission = state.deviceRequirePermission,
-                devicePermissionGranted = state.devicePermissionGranted
+                devicePermissionGranted = state.devicePermissionGranted,
+                bytesRead = state.bytesRead,
+                bytesWrite = state.bytesWrite
             )
         }
 
@@ -177,6 +215,51 @@ class DeviceConnectionViewModel @Inject constructor(
                 state.value.copy(errorMessage = e.localizedMessage)
             } catch (e: DevicePermissionDeniedException) {
                 state.value.copy(errorMessage = e.localizedMessage, deviceRequirePermission = true)
+            } catch (e: Exception) {
+                state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
+            }
+        }
+
+        private suspend fun readBytes(
+            deviceId: String,
+            repository: DeviceRepository
+        ): ByteArray {
+            return repository.readBytes(deviceId)
+        }
+
+        private suspend fun writeBytes(
+            deviceId: String,
+            repository: DeviceRepository,
+            byteArray: ByteArray
+        ) {
+            repository.writeBytes(
+                deviceId = deviceId,
+                bytes = byteArray
+            )
+        }
+
+        private suspend fun readBytesAsState(
+            deviceId: String,
+            repository: DeviceRepository,
+            state: StateFlow<DeviceConnectionState>
+        ): DeviceConnectionState {
+            return try {
+                val bytes = readBytes(deviceId, repository)
+                state.value.copy(bytesRead = bytes.toString())
+            } catch (e: Exception) {
+                state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
+            }
+        }
+
+        private suspend fun writeBytesAsState(
+            deviceId: String,
+            repository: DeviceRepository,
+            state: StateFlow<DeviceConnectionState>,
+            byteArray: ByteArray
+        ): DeviceConnectionState {
+            return try {
+                writeBytes(deviceId, repository, byteArray)
+                state.value.copy(bytesWrite = byteArray.toString())
             } catch (e: Exception) {
                 state.value.copy(errorMessage = e.localizedMessage ?: e.message ?: "")
             }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -39,7 +40,9 @@ fun DeviceConnectionScreen() {
     DeviceConnectionScreenContent(
         state = state,
         connect = viewModel::connectDevice,
-        disconnect = viewModel::disconnectDevice
+        disconnect = viewModel::disconnectDevice,
+        readBytes = viewModel::readBytes,
+        writeBytes = viewModel::writeBytes
     )
 }
 
@@ -64,7 +67,9 @@ private fun DeviceManager(
 private fun DeviceConnectionScreenContent(
     state: DeviceConnectionUiState,
     connect: () -> Unit,
-    disconnect: () -> Unit
+    disconnect: () -> Unit,
+    readBytes: () -> Unit,
+    writeBytes: () -> Unit
 ) {
     Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
         Column(
@@ -84,7 +89,16 @@ private fun DeviceConnectionScreenContent(
             DeviceConnection(state.deviceConnected, state.connectionDevice)
 
             Spacer(modifier = Modifier.height(12.dp))
-            DeviceActions(connected = state.deviceConnected, connect, disconnect)
+            DeviceActions(
+                connected = state.deviceConnected,
+                connect = connect,
+                disconnect = disconnect,
+                readBytes = readBytes,
+                writeBytes = writeBytes
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Bytes(bytesRead = state.bytesRead, bytesWrite = state.bytesWrite)
         }
     }
 }
@@ -125,12 +139,27 @@ private fun Loading(loading: Boolean) {
     )
 }
 
+@Composable
+private fun Bytes(bytesRead: String, bytesWrite: String) {
+    Text(
+        text = "Bytes Read: $bytesRead",
+        maxLines = 5,
+        overflow = TextOverflow.Ellipsis
+    )
+    Text(
+        text = "Bytes Write: $bytesWrite",
+        maxLines = 5,
+        overflow = TextOverflow.Ellipsis
+    )
+}
 
 @Composable
 private fun DeviceActions(
     connected: Boolean,
     connect: () -> Unit,
-    disconnect: () -> Unit
+    disconnect: () -> Unit,
+    readBytes: () -> Unit,
+    writeBytes: () -> Unit,
 ) {
     if (!connected) {
         Button(onClick = connect) {
@@ -139,6 +168,12 @@ private fun DeviceActions(
     } else {
         Button(onClick = disconnect) {
             Text(text = "Disconnect")
+        }
+        Button(onClick = readBytes) {
+            Text(text = "Read Bytes")
+        }
+        Button(onClick = writeBytes) {
+            Text(text = "Write Bytes")
         }
     }
 }
@@ -150,6 +185,8 @@ private fun ScreenPreview() {
     DeviceConnectionScreenContent(
         state = state,
         connect = {},
-        disconnect = {}
+        disconnect = {},
+        readBytes = {},
+        writeBytes = {}
     )
 }
