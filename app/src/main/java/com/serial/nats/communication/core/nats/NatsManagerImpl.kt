@@ -8,7 +8,9 @@ import io.nats.client.Connection
 import io.nats.client.Dispatcher
 import io.nats.client.Nats
 import io.nats.client.Options
+import java.io.FileInputStream
 import java.time.Duration
+import java.util.Properties
 
 class NatsManagerImpl(
     private val config: NatsConfig
@@ -58,6 +60,14 @@ class NatsManagerImpl(
                 .connectionTimeout(Duration.ofMinutes(10))
                 .maxReconnects(5)
                 .server(config.url)
+                .properties(getCertificateProperty())
+        }
+
+        private fun getCertificateProperty(): Properties {
+            val properties = Properties()
+            val fileInputStream = FileInputStream("ca.pem")
+            properties.load(fileInputStream)
+            return properties
         }
 
         private fun requireOpenConnection(connection: Connection?) {
