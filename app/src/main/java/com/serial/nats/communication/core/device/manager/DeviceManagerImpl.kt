@@ -155,7 +155,7 @@ class DeviceManagerImpl(
             val usbManager = getUsbManager(context)
             requireDevicePermission(usbManager, device.device)
             val usbConnection = usbManager.openDevice(device.device)
-            device.port.open(usbConnection)
+            if (!device.port.isOpen) device.port.open(usbConnection)
             return device.copy(connected = true)
         }
 
@@ -167,7 +167,7 @@ class DeviceManagerImpl(
             val device = getDeviceById(context, deviceId, cacheSerialPorts)
             val usbManager = getUsbManager(context)
             requireDevicePermission(usbManager, device.device)
-            device.port.close()
+            if (device.port.isOpen) device.port.close()
             return device.copy(connected = false)
         }
 
