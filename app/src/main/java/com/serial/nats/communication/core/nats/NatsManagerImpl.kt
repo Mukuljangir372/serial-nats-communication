@@ -10,8 +10,16 @@ import io.nats.client.Connection
 import io.nats.client.Dispatcher
 import io.nats.client.Nats
 import io.nats.client.Options
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.security.KeyStore
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 import java.time.Duration
-import java.util.Properties
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
 
 class NatsManagerImpl(
     private val config: NatsConfig,
@@ -55,6 +63,11 @@ class NatsManagerImpl(
     }
 
     companion object {
+        private const val CERTIFICATE_KEY = "X.509"
+        private const val CERTIFICATE_NAME = "caCert"
+        private const val TLS = "TLS"
+        private const val CERTIFICATE_FILE = "ca.pem"
+
         @RequiresApi(Build.VERSION_CODES.O)
         private fun getOptionBuilder(config: NatsConfig, context: Context): Options.Builder {
             return Options.Builder()
@@ -62,14 +75,45 @@ class NatsManagerImpl(
                 .connectionTimeout(Duration.ofMinutes(10))
                 .maxReconnects(5)
                 .server(config.url)
-                .properties(getCertificateProperty(context))
+                .sslContext(getSslContext(context))
         }
 
-        private fun getCertificateProperty(context: Context): Properties {
-            val path = context.resources.openRawResource(R.raw.ca)
-            val properties = Properties()
-            properties.load(path)
-            return properties
+        private fun getSslContext(context: Context): SSLContext {
+            val caCertPath = getCertificateFile(context).path
+
+            val certificateFactory = CertificateFactory.getInstance(CERTIFICATE_KEY)
+            val caCertFile = FileInputStream(caCertPath)
+            val caCert: X509Certificate =
+                certificateFactory.generateCertificate(caCertFile) as X509Certificate
+
+            val trustStore = KeyStore.getInstance(KeyStore.getDefaultType())
+            trustStore.load(null, null)
+
+            trustStore.setCertificateEntry(CERTIFICATE_NAME, caCert)
+
+            val trustManagerFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            trustManagerFactory.init(trustStore)
+
+            val sslContext = SSLContext.getInstance(TLS)
+            sslContext.init(null, trustManagerFactory.trustManagers, null)
+            return sslContext
+        }
+
+        private fun getCertificateFile(context: Context): File {
+            val inputStream: InputStream = context.resources.openRawResource(R.raw.ca)
+            val destinationFile = File("${context.cacheDir}/$CERTIFICATE_FILE")
+            val outputStream = FileOutputStream(destinationFile)
+            if (!destinationFile.exists()) {
+                val buffer = ByteArray(1024)
+                var read: Int
+                while (inputStream.read(buffer).also { read = it } != -1) {
+                    outputStream.write(buffer, 0, read)
+                }
+                inputStream.close()
+                outputStream.close()
+            }
+            return destinationFile
         }
 
         private fun requireOpenConnection(connection: Connection?) {
