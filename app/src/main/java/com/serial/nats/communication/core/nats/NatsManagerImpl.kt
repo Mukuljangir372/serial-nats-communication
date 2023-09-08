@@ -103,16 +103,17 @@ class NatsManagerImpl(
         private fun getCertificateFile(context: Context): File {
             val inputStream: InputStream = context.resources.openRawResource(R.raw.ca)
             val destinationFile = File("${context.cacheDir}/$CERTIFICATE_FILE")
+            if (destinationFile.exists()) destinationFile.delete()
+            destinationFile.createNewFile()
+
             val outputStream = FileOutputStream(destinationFile)
-            if (!destinationFile.exists()) {
-                val buffer = ByteArray(1024)
-                var read: Int
-                while (inputStream.read(buffer).also { read = it } != -1) {
-                    outputStream.write(buffer, 0, read)
-                }
-                inputStream.close()
-                outputStream.close()
+            val buffer = ByteArray(1024)
+            var read: Int
+            while (inputStream.read(buffer).also { read = it } != -1) {
+                outputStream.write(buffer, 0, read)
             }
+            inputStream.close()
+            outputStream.close()
             return destinationFile
         }
 
