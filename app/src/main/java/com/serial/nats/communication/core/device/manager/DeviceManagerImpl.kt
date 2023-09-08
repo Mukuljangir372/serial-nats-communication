@@ -17,15 +17,19 @@ class DeviceManagerImpl(
     private val context: Context,
     private val dispatcher: CoroutineDispatcher
 ) : DeviceManager {
+    private val cacheSerialPorts by lazy {
+        hashMapOf<String, UsbSerialPort>()
+    }
+
     override suspend fun getDevices(): List<NativeDevice> {
         return withContext(dispatcher) {
-            getDevices(context)
+            getDevices(context, cacheSerialPorts)
         }
     }
 
     override suspend fun getDevice(id: String): NativeDevice {
         return withContext(dispatcher) {
-            getDeviceById(context, id)
+            getDeviceById(context, id, cacheSerialPorts)
         }
     }
 
@@ -33,7 +37,7 @@ class DeviceManagerImpl(
         deviceId: String
     ): NativeDevice {
         return withContext(dispatcher) {
-            openDeviceConnection(context, deviceId)
+            openDeviceConnection(context, deviceId, cacheSerialPorts)
         }
     }
 
@@ -41,29 +45,35 @@ class DeviceManagerImpl(
         deviceId: String
     ): NativeDevice {
         return withContext(dispatcher) {
-            closeDeviceConnection(context, deviceId)
+            closeDeviceConnection(context, deviceId, cacheSerialPorts)
         }
     }
 
     override suspend fun readBytes(deviceId: String): ByteArray {
         return withContext(dispatcher) {
-            readBytes(deviceId, context)
+            readBytes(deviceId, context, cacheSerialPorts)
         }
     }
 
     override suspend fun writeBytes(deviceId: String, bytes: ByteArray) {
         return withContext(dispatcher) {
-            writeBytes(deviceId, bytes, context)
+            writeBytes(deviceId, bytes, context, cacheSerialPorts)
         }
     }
 
     companion object {
         private const val IO_TIMEOUT_MILLIS = 2000
 
-        private fun getDevices(context: Context): List<NativeDevice> {
+        private fun getDevices(
+            context: Context,
+            cacheSerialPorts: HashMap<String, UsbSerialPort>
+        ): List<NativeDevice> {
             val usbManager = getUsbManager(context)
             val devices = usbManager.deviceList.mapNotNull { it.value }
-            return convertDeviceListToNativeDeviceList(devices)
+            return convertDeviceListToNativeDeviceList(
+                deviceList = devices,
+                cacheSerialPorts = cacheSerialPorts
+            )
         }
 
         private fun getCustomUsbProber(device: UsbDevice): UsbSerialProber {
@@ -86,13 +96,16 @@ class DeviceManagerImpl(
 
         private fun convertDeviceListToNativeDeviceList(
             deviceList: List<UsbDevice>,
+            cacheSerialPorts: HashMap<String, UsbSerialPort>
         ): List<NativeDevice> {
             return deviceList.map { device ->
                 val driver = getDeviceDriver(device)
                 driver.ports.map { port ->
+                    val cachePort = cacheSerialPorts["${driver.device.deviceId}+${port.portNumber}"]
+                    if (cachePort == null) cacheSerialPorts["${driver.device.deviceId}"] = port
                     convertDriverToNativeDevice(
                         driver = driver,
-                        port = port
+                        port = cachePort ?: port
                     )
                 }
             }.flatten()
@@ -114,9 +127,10 @@ class DeviceManagerImpl(
 
         private fun getDeviceById(
             context: Context,
-            deviceId: String
+            deviceId: String,
+            cacheSerialPorts: HashMap<String, UsbSerialPort>
         ): NativeDevice {
-            val device = getDevices(context).find { it.id == deviceId }
+            val device = getDevices(context, cacheSerialPorts).find { it.id == deviceId }
             if (device == null) throw DeviceNotFoundException(deviceId)
             else return device
         }
@@ -132,9 +146,10 @@ class DeviceManagerImpl(
 
         private fun openDeviceConnection(
             context: Context,
-            deviceId: String
+            deviceId: String,
+            cacheSerialPorts: HashMap<String, UsbSerialPort>
         ): NativeDevice {
-            val device = getDeviceById(context, deviceId)
+            val device = getDeviceById(context, deviceId, cacheSerialPorts)
             val usbManager = getUsbManager(context)
             requireDevicePermission(usbManager, device.device)
             val usbConnection = usbManager.openDevice(device.device)
@@ -144,9 +159,10 @@ class DeviceManagerImpl(
 
         private fun closeDeviceConnection(
             context: Context,
-            deviceId: String
+            deviceId: String,
+            cacheSerialPorts: HashMap<String, UsbSerialPort>
         ): NativeDevice {
-            val device = getDeviceById(context, deviceId)
+            val device = getDeviceById(context, deviceId, cacheSerialPorts)
             val usbManager = getUsbManager(context)
             requireDevicePermission(usbManager, device.device)
             device.port.close()
@@ -155,10 +171,11 @@ class DeviceManagerImpl(
 
         private fun readBytes(
             deviceId: String,
-            context: Context
+            context: Context,
+            cacheSerialPorts: HashMap<String, UsbSerialPort>
         ): ByteArray {
-            val device = getDeviceById(context, deviceId)
-            if (!device.port.isOpen) openDeviceConnection(context, deviceId)
+            val device = getDeviceById(context, deviceId, cacheSerialPorts)
+            if (!device.port.isOpen) openDeviceConnection(context, deviceId, cacheSerialPorts)
             val bytes = ByteArray(8192)
             val length = device.port.read(bytes, IO_TIMEOUT_MILLIS)
             return bytes.copyOf(length)
@@ -167,10 +184,11 @@ class DeviceManagerImpl(
         private fun writeBytes(
             deviceId: String,
             bytes: ByteArray,
-            context: Context
+            context: Context,
+            cacheSerialPorts: HashMap<String, UsbSerialPort>
         ) {
-            val device = getDeviceById(context, deviceId)
-            if (!device.port.isOpen) openDeviceConnection(context, deviceId)
+            val device = getDeviceById(context, deviceId, cacheSerialPorts)
+            if (!device.port.isOpen) openDeviceConnection(context, deviceId, cacheSerialPorts)
             device.port.write(bytes, IO_TIMEOUT_MILLIS)
         }
     }
