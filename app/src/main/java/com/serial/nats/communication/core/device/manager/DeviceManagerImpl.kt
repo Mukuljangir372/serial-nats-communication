@@ -102,8 +102,9 @@ class DeviceManagerImpl(
                 val driver = getDeviceDriver(device)
                 driver.ports.map { port ->
                     val cachePort = cacheSerialPorts["${driver.device.deviceId}+${port.portNumber}"]
-                    if (cachePort == null) cacheSerialPorts["${driver.device.deviceId}+${port.portNumber}"] =
-                        port
+                    if (cachePort == null) {
+                        cacheSerialPorts["${driver.device.deviceId}+${port.portNumber}"] = port
+                    }
                     convertDriverToNativeDevice(
                         driver = driver,
                         port = cachePort ?: port
